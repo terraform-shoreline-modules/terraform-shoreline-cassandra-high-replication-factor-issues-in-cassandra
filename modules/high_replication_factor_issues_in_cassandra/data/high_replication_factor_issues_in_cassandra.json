@@ -1,0 +1,166 @@
+{
+  "name": "high_replication_factor_issues_in_cassandra",
+  "description": "This incident type refers to issues that occur in Cassandra due to a high replication factor. Replication factor is a setting that determines how many copies of data are stored in a cluster. A high replication factor means that more copies of data are stored in the cluster, which can cause performance issues and potentially lead to data inconsistencies. When this incident occurs, it may affect the availability and stability of the Cassandra cluster, impacting the ability to read and write data.",
+  "params": [
+    {
+      "name": "TABLE_NAME",
+      "value": ""
+    },
+    {
+      "name": "NODE_IP",
+      "value": ""
+    },
+    {
+      "name": "NEW_REPLICATION_FACTOR",
+      "value": ""
+    },
+    {
+      "name": "KEYSPACE_NAME",
+      "value": ""
+    },
+    {
+      "name": "PARTITION_KEY_VALUE",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## High Replication Factor Issues in Cassandra\nThis incident type refers to issues that occur in Cassandra due to a high replication factor. Replication factor is a setting that determines how many copies of data are stored in a cluster. A high replication factor means that more copies of data are stored in the cluster, which can cause performance issues and potentially lead to data inconsistencies. When this incident occurs, it may affect the availability and stability of the Cassandra cluster, impacting the ability to read and write data."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Connect to a Cassandra node in the cluster"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `cqlsh ${NODE_IP}`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the replication factor for a given keyspace and table"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_describe_keyspace_table($TABLE_NAME, $KEYSPACE_NAME)"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the number of replicas for a given keyspace and table"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `SELECT * FROM system_schema.columns WHERE keyspace_name='${KEYSPACE_NAME}' AND table_name='${TABLE_NAME}';`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the status of the nodes in the cluster"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `nodetool status`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the replication factor for a given keyspace and table on all nodes in the cluster"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `nodetool getendpoints ${KEYSPACE_NAME} ${TABLE_NAME} ${PARTITION_KEY_VALUE}`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the status of the nodes in the cluster to identify any nodes that are down or experiencing issues"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `nodetool status`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the replication factor for a given keyspace and table on all nodes in the cluster to identify any inconsistencies"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `nodetool consistency ${KEYSPACE_NAME}.${TABLE_NAME}`"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the system logs for any errors or warnings related to replication factor"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -f /var/log/cassandra/system.log | grep \"replication factor\"`"
+    },
+    {
+      "name": "cell_18",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the read/write latency for the cluster"
+    },
+    {
+      "name": "cell_19",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `nodetool tpstats`"
+    },
+    {
+      "name": "cell_20",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Reduce the replication factor: One possible remediation for this incident is to reduce the replication factor. This can be done by adjusting the configuration settings in Cassandra to store fewer copies of data. However, this may impact data availability and durability, so it's important to carefully consider the trade-offs before making changes."
+    },
+    {
+      "name": "cell_21",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_update_cassandra_replication($NEW_REPLICATION_FACTOR)"
+    }
+  ]
+}
